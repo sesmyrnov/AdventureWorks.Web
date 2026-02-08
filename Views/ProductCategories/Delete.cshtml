@@ -18,27 +18,21 @@
             @Html.DisplayFor(model => model.Name)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.Rowguid)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Rowguid)
-        </dd>
-        <dt>
             @Html.DisplayNameFor(model => model.ModifiedDate)
         </dt>
         <dd>
             @Html.DisplayFor(model => model.ModifiedDate)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.ParentProductCategory)
+            @Html.DisplayNameFor(model => model.ParentCategoryName)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.ParentProductCategory.Name)
+            @Html.DisplayFor(model => model.ParentCategoryName)
         </dd>
     </dl>
     
     <form asp-action="Delete">
-        <input type="hidden" asp-for="ProductCategoryId" />
+        <input type="hidden" asp-for="Id" />
         <input type="submit" value="Delete" class="btn btn-default" /> |
         <a asp-action="Index">Back to List</a>
     </form>

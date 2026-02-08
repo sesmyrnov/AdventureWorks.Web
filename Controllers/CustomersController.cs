@@ -1,152 +1,118 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
 using AdventureWorks.Web.Models;
+using AdventureWorks.Web.Services;
 
-namespace AdventureWorks.Web.Controllers
+namespace AdventureWorks.Web.Controllers;
+
+public class CustomersController : Controller
 {
-    public class CustomersController : Controller
+    private readonly CosmosDbService _cosmosDb;
+
+    public CustomersController(CosmosDbService cosmosDb)
     {
-        private readonly sampledbContext _context;
+        _cosmosDb = cosmosDb;
+    }
 
-        public CustomersController(sampledbContext context)
+    // GET: Customers
+    public async Task<IActionResult> Index()
+    {
+        var customers = await _cosmosDb.GetCustomersAsync();
+        return View(customers);
+    }
+
+    // GET: Customers/Details/{id}
+    public async Task<IActionResult> Details(string id)
+    {
+        if (id == null) return NotFound();
+
+        var customer = await _cosmosDb.GetCustomerAsync(id);
+        if (customer == null) return NotFound();
+
+        return View(customer);
+    }
+
+    // GET: Customers/Create
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    // POST: Customers/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        [Bind("NameStyle,Title,FirstName,MiddleName,LastName,Suffix," +
+              "CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt")] Customer customer)
+    {
+        if (ModelState.IsValid)
         {
-            _context = context;
-        }
-
-        // GET: Customers
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.Customer.ToListAsync());
-        }
-
-        // GET: Customers/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var customer = await _context.Customer
-                .FirstOrDefaultAsync(m => m.CustomerId == id);
-            if (customer == null)
-            {
-                return NotFound();
-            }
-
-            return View(customer);
-        }
-
-        // GET: Customers/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Customers/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CustomerId,NameStyle,Title,FirstName,MiddleName,LastName,Suffix,CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt,Rowguid,ModifiedDate")] Customer customer)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(customer);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(customer);
-        }
-
-        // GET: Customers/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var customer = await _context.Customer.FindAsync(id);
-            if (customer == null)
-            {
-                return NotFound();
-            }
-            return View(customer);
-        }
-
-        // POST: Customers/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CustomerId,NameStyle,Title,FirstName,MiddleName,LastName,Suffix,CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt,Rowguid,ModifiedDate")] Customer customer)
-        {
-            if (id != customer.CustomerId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(customer);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CustomerExists(customer.CustomerId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(customer);
-        }
-
-        // GET: Customers/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var customer = await _context.Customer
-                .FirstOrDefaultAsync(m => m.CustomerId == id);
-            if (customer == null)
-            {
-                return NotFound();
-            }
-
-            return View(customer);
-        }
-
-        // POST: Customers/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var customer = await _context.Customer.FindAsync(id);
-            _context.Customer.Remove(customer);
-            await _context.SaveChangesAsync();
+            var newId = Guid.NewGuid().ToString();
+            customer.Id = newId;
+            customer.CustomerId = newId;
+            customer.DocType = "customer";
+            customer.ModifiedDate = DateTime.UtcNow;
+            customer.Addresses ??= new List<CustomerAddress>();
+            await _cosmosDb.CreateCustomerAsync(customer);
             return RedirectToAction(nameof(Index));
         }
+        return View(customer);
+    }
 
-        private bool CustomerExists(int id)
+    // GET: Customers/Edit/{id}
+    public async Task<IActionResult> Edit(string id)
+    {
+        if (id == null) return NotFound();
+
+        var customer = await _cosmosDb.GetCustomerAsync(id);
+        if (customer == null) return NotFound();
+
+        return View(customer);
+    }
+
+    // POST: Customers/Edit/{id}
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(string id,
+        [Bind("Id,CustomerId,NameStyle,Title,FirstName,MiddleName,LastName,Suffix," +
+              "CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt,ModifiedDate")] Customer customer)
+    {
+        if (id != customer.Id) return NotFound();
+
+        if (ModelState.IsValid)
         {
-            return _context.Customer.Any(e => e.CustomerId == id);
+            customer.DocType = "customer";
+            customer.ModifiedDate = DateTime.UtcNow;
+
+            if (!await _cosmosDb.CustomerExistsAsync(id))
+                return NotFound();
+
+            // Preserve existing addresses (not edited in this form)
+            var existing = await _cosmosDb.GetCustomerAsync(id);
+            customer.Addresses = existing?.Addresses ?? new List<CustomerAddress>();
+
+            await _cosmosDb.UpdateCustomerAsync(customer);
+            return RedirectToAction(nameof(Index));
         }
+        return View(customer);
+    }
+
+    // GET: Customers/Delete/{id}
+    public async Task<IActionResult> Delete(string id)
+    {
+        if (id == null) return NotFound();
+
+        var customer = await _cosmosDb.GetCustomerAsync(id);
+        if (customer == null) return NotFound();
+
+        return View(customer);
+    }
+
+    // POST: Customers/Delete/{id}
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(string id)
+    {
+        await _cosmosDb.DeleteCustomerAsync(id);
+        return RedirectToAction(nameof(Index));
     }
 }

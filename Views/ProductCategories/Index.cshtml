@@ -16,13 +16,10 @@
                 @Html.DisplayNameFor(model => model.Name)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Rowguid)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.ModifiedDate)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.ParentProductCategory)
+                @Html.DisplayNameFor(model => model.ParentCategoryName)
             </th>
             <th></th>
         </tr>
@@ -34,18 +31,15 @@
                 @Html.DisplayFor(modelItem => item.Name)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Rowguid)
-            </td>
-            <td>
                 @Html.DisplayFor(modelItem => item.ModifiedDate)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.ParentProductCategory.Name)
+                @Html.DisplayFor(modelItem => item.ParentCategoryName)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.ProductCategoryId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ProductCategoryId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ProductCategoryId">Delete</a>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>
 }

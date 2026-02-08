@@ -1,159 +1,138 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using AdventureWorks.Web.Models;
+using AdventureWorks.Web.Services;
 
-namespace AdventureWorks.Web.Controllers
+namespace AdventureWorks.Web.Controllers;
+
+public class ProductCategoriesController : Controller
 {
-    public class ProductCategoriesController : Controller
+    private readonly CosmosDbService _cosmosDb;
+
+    public ProductCategoriesController(CosmosDbService cosmosDb)
     {
-        private readonly sampledbContext _context;
+        _cosmosDb = cosmosDb;
+    }
 
-        public ProductCategoriesController(sampledbContext context)
+    // GET: ProductCategories
+    public async Task<IActionResult> Index()
+    {
+        var categories = await _cosmosDb.GetProductCategoriesAsync();
+        return View(categories);
+    }
+
+    // GET: ProductCategories/Details/{id}
+    public async Task<IActionResult> Details(string id)
+    {
+        if (id == null) return NotFound();
+
+        var category = await _cosmosDb.GetProductCategoryAsync(id);
+        if (category == null) return NotFound();
+
+        return View(category);
+    }
+
+    // GET: ProductCategories/Create
+    public async Task<IActionResult> Create()
+    {
+        await PopulateParentDropdown();
+        return View();
+    }
+
+    // POST: ProductCategories/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        [Bind("ParentProductCategoryId,Name")] ProductCategory category)
+    {
+        if (ModelState.IsValid)
         {
-            _context = context;
-        }
-
-        // GET: ProductCategories
-        public async Task<IActionResult> Index()
-        {
-            var sampledbContext = _context.ProductCategory.Include(p => p.ParentProductCategory);
-            return View(await sampledbContext.ToListAsync());
-        }
-
-        // GET: ProductCategories/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var productCategory = await _context.ProductCategory
-                .Include(p => p.ParentProductCategory)
-                .FirstOrDefaultAsync(m => m.ProductCategoryId == id);
-            if (productCategory == null)
-            {
-                return NotFound();
-            }
-
-            return View(productCategory);
-        }
-
-        // GET: ProductCategories/Create
-        public IActionResult Create()
-        {
-            ViewData["ParentProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name");
-            return View();
-        }
-
-        // POST: ProductCategories/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProductCategoryId,ParentProductCategoryId,Name,Rowguid,ModifiedDate")] ProductCategory productCategory)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(productCategory);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ParentProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name", productCategory.ParentProductCategoryId);
-            return View(productCategory);
-        }
-
-        // GET: ProductCategories/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var productCategory = await _context.ProductCategory.FindAsync(id);
-            if (productCategory == null)
-            {
-                return NotFound();
-            }
-            ViewData["ParentProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name", productCategory.ParentProductCategoryId);
-            return View(productCategory);
-        }
-
-        // POST: ProductCategories/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductCategoryId,ParentProductCategoryId,Name,Rowguid,ModifiedDate")] ProductCategory productCategory)
-        {
-            if (id != productCategory.ProductCategoryId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(productCategory);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductCategoryExists(productCategory.ProductCategoryId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ParentProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name", productCategory.ParentProductCategoryId);
-            return View(productCategory);
-        }
-
-        // GET: ProductCategories/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var productCategory = await _context.ProductCategory
-                .Include(p => p.ParentProductCategory)
-                .FirstOrDefaultAsync(m => m.ProductCategoryId == id);
-            if (productCategory == null)
-            {
-                return NotFound();
-            }
-
-            return View(productCategory);
-        }
-
-        // POST: ProductCategories/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var productCategory = await _context.ProductCategory.FindAsync(id);
-            _context.ProductCategory.Remove(productCategory);
-            await _context.SaveChangesAsync();
+            category.Id = $"category-{Guid.NewGuid()}";
+            category.DocType = "productCategory";
+            category.ModifiedDate = DateTime.UtcNow;
+            await DenormalizeParentName(category);
+            await _cosmosDb.CreateProductCategoryAsync(category);
             return RedirectToAction(nameof(Index));
         }
+        await PopulateParentDropdown(category);
+        return View(category);
+    }
 
-        private bool ProductCategoryExists(int id)
+    // GET: ProductCategories/Edit/{id}
+    public async Task<IActionResult> Edit(string id)
+    {
+        if (id == null) return NotFound();
+
+        var category = await _cosmosDb.GetProductCategoryAsync(id);
+        if (category == null) return NotFound();
+
+        await PopulateParentDropdown(category);
+        return View(category);
+    }
+
+    // POST: ProductCategories/Edit/{id}
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(string id,
+        [Bind("Id,ParentProductCategoryId,Name,ModifiedDate")] ProductCategory category)
+    {
+        if (id != category.Id) return NotFound();
+
+        if (ModelState.IsValid)
         {
-            return _context.ProductCategory.Any(e => e.ProductCategoryId == id);
+            category.DocType = "productCategory";
+            category.ModifiedDate = DateTime.UtcNow;
+            await DenormalizeParentName(category);
+
+            if (!await _cosmosDb.ProductCategoryExistsAsync(id))
+                return NotFound();
+
+            await _cosmosDb.UpdateProductCategoryAsync(category);
+            return RedirectToAction(nameof(Index));
+        }
+        await PopulateParentDropdown(category);
+        return View(category);
+    }
+
+    // GET: ProductCategories/Delete/{id}
+    public async Task<IActionResult> Delete(string id)
+    {
+        if (id == null) return NotFound();
+
+        var category = await _cosmosDb.GetProductCategoryAsync(id);
+        if (category == null) return NotFound();
+
+        return View(category);
+    }
+
+    // POST: ProductCategories/Delete/{id}
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(string id)
+    {
+        await _cosmosDb.DeleteProductCategoryAsync(id);
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+
+    private async Task PopulateParentDropdown(ProductCategory current = null)
+    {
+        var categories = await _cosmosDb.GetProductCategoriesAsync();
+        ViewData["ParentProductCategoryId"] = new SelectList(
+            categories, "Id", "Name", current?.ParentProductCategoryId);
+    }
+
+    private async Task DenormalizeParentName(ProductCategory category)
+    {
+        if (!string.IsNullOrEmpty(category.ParentProductCategoryId))
+        {
+            var parent = await _cosmosDb.GetProductCategoryAsync(category.ParentProductCategoryId);
+            category.ParentCategoryName = parent?.Name;
+        }
+        else
+        {
+            category.ParentCategoryName = null;
         }
     }
 }

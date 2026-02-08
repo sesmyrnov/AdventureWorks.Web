@@ -12,7 +12,7 @@
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="ProductId" />
+            <input type="hidden" asp-for="Id" />
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
                 <input asp-for="Name" class="form-control" />
@@ -74,19 +74,9 @@
                 <span asp-validation-for="DiscontinuedDate" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="ThumbNailPhoto" class="control-label"></label>
-                <input asp-for="ThumbNailPhoto" class="form-control" />
-                <span asp-validation-for="ThumbNailPhoto" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <label asp-for="ThumbnailPhotoFileName" class="control-label"></label>
                 <input asp-for="ThumbnailPhotoFileName" class="form-control" />
                 <span asp-validation-for="ThumbnailPhotoFileName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Rowguid" class="control-label"></label>
-                <input asp-for="Rowguid" class="form-control" />
-                <span asp-validation-for="Rowguid" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="ModifiedDate" class="control-label"></label>

@@ -1,26 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Azure.Identity;
+using Microsoft.Azure.Cosmos;
+using AdventureWorks.Web.Services;
 
-namespace AdventureWorks.Web
-{
-    public class Program
+var builder = WebApplication.CreateBuilder(args);
+
+// ─── Cosmos DB ───────────────────────────────────────────────────────
+var cosmosSection = builder.Configuration.GetSection("CosmosDb");
+var endpoint = cosmosSection["Endpoint"];
+var databaseName = cosmosSection["DatabaseName"];
+var productsContainer = cosmosSection["ProductsContainerName"];
+var customersContainer = cosmosSection["CustomersContainerName"];
+
+var cosmosClient = new CosmosClient(endpoint, new DefaultAzureCredential(),
+    new CosmosClientOptions
     {
-        public static void Main(string[] args)
+        SerializerOptions = new CosmosSerializationOptions
         {
-            CreateWebHostBuilder(args).Build().Run();
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
         }
+    });
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseSetting("detailedErrors", "true")
-                .CaptureStartupErrors(true)
-                .UseStartup<Startup>();
-    }
+builder.Services.AddSingleton(cosmosClient);
+builder.Services.AddSingleton(new CosmosDbService(
+    cosmosClient, databaseName, productsContainer, customersContainer));
+
+// ─── MVC ─────────────────────────────────────────────────────────────
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=ProductCategories}/{action=Index}/{id?}");
+
+app.Run();

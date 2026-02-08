@@ -1,24 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace AdventureWorks.Web.Models
+namespace AdventureWorks.Web.Models;
+
+/// <summary>
+/// ProductCategory document — stored in the "products" container with partition key /id.
+/// Denormalizes ParentCategoryName to avoid cross-document joins.
+/// </summary>
+public class ProductCategory
 {
-    public partial class ProductCategory
-    {
-        public ProductCategory()
-        {
-            InverseParentProductCategory = new HashSet<ProductCategory>();
-            Product = new HashSet<Product>();
-        }
+    public string Id { get; set; }
 
-        public int ProductCategoryId { get; set; }
-        public int? ParentProductCategoryId { get; set; }
-        public string Name { get; set; }
-        public Guid Rowguid { get; set; }
-        public DateTime ModifiedDate { get; set; }
+    public string DocType { get; set; } = "productCategory";
 
-        public ProductCategory ParentProductCategory { get; set; }
-        public ICollection<ProductCategory> InverseParentProductCategory { get; set; }
-        public ICollection<Product> Product { get; set; }
-    }
+    [Required]
+    public string Name { get; set; }
+
+    [Display(Name = "Parent Category")]
+    public string ParentProductCategoryId { get; set; }
+
+    [Display(Name = "Parent Category")]
+    public string ParentCategoryName { get; set; }
+
+    [Display(Name = "Modified Date")]
+    public DateTime ModifiedDate { get; set; }
 }

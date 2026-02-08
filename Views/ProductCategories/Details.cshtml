@@ -17,26 +17,20 @@
             @Html.DisplayFor(model => model.Name)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.Rowguid)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Rowguid)
-        </dd>
-        <dt>
             @Html.DisplayNameFor(model => model.ModifiedDate)
         </dt>
         <dd>
             @Html.DisplayFor(model => model.ModifiedDate)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.ParentProductCategory)
+            @Html.DisplayNameFor(model => model.ParentCategoryName)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.ParentProductCategory.Name)
+            @Html.DisplayFor(model => model.ParentCategoryName)
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.ProductCategoryId">Edit</a> |
+    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>

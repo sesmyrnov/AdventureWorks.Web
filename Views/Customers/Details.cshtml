@@ -83,12 +83,6 @@
             @Html.DisplayFor(model => model.PasswordSalt)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.Rowguid)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Rowguid)
-        </dd>
-        <dt>
             @Html.DisplayNameFor(model => model.ModifiedDate)
         </dt>
         <dd>
@@ -97,6 +91,6 @@
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.CustomerId">Edit</a> |
+    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>

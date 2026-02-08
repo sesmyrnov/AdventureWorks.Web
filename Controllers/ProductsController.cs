@@ -1,165 +1,152 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using AdventureWorks.Web.Models;
+using AdventureWorks.Web.Services;
 
-namespace AdventureWorks.Web.Controllers
+namespace AdventureWorks.Web.Controllers;
+
+public class ProductsController : Controller
 {
-    public class ProductsController : Controller
+    private readonly CosmosDbService _cosmosDb;
+
+    public ProductsController(CosmosDbService cosmosDb)
     {
-        private readonly sampledbContext _context;
+        _cosmosDb = cosmosDb;
+    }
 
-        public ProductsController(sampledbContext context)
+    // GET: Products
+    public async Task<IActionResult> Index()
+    {
+        var products = await _cosmosDb.GetProductsAsync();
+        return View(products);
+    }
+
+    // GET: Products/Details/{id}
+    public async Task<IActionResult> Details(string id)
+    {
+        if (id == null) return NotFound();
+
+        var product = await _cosmosDb.GetProductAsync(id);
+        if (product == null) return NotFound();
+
+        return View(product);
+    }
+
+    // GET: Products/Create
+    public async Task<IActionResult> Create()
+    {
+        await PopulateDropdowns();
+        return View();
+    }
+
+    // POST: Products/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        [Bind("Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight," +
+              "ProductCategoryId,ProductModelId,SellStartDate,SellEndDate," +
+              "DiscontinuedDate,ThumbnailPhotoFileName")] Product product)
+    {
+        if (ModelState.IsValid)
         {
-            _context = context;
-        }
-
-        // GET: Products
-        public async Task<IActionResult> Index()
-        {
-            var sampledbContext = _context.Product.Include(p => p.ProductCategory).Include(p => p.ProductModel);
-            return View(await sampledbContext.ToListAsync());
-        }
-
-        // GET: Products/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var product = await _context.Product
-                .Include(p => p.ProductCategory)
-                .Include(p => p.ProductModel)
-                .FirstOrDefaultAsync(m => m.ProductId == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            return View(product);
-        }
-
-        // GET: Products/Create
-        public IActionResult Create()
-        {
-            ViewData["ProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name");
-            ViewData["ProductModelId"] = new SelectList(_context.ProductModel, "ProductModelId", "Name");
-            return View();
-        }
-
-        // POST: Products/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProductId,Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight,ProductCategoryId,ProductModelId,SellStartDate,SellEndDate,DiscontinuedDate,ThumbNailPhoto,ThumbnailPhotoFileName,Rowguid,ModifiedDate")] Product product)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name", product.ProductCategoryId);
-            ViewData["ProductModelId"] = new SelectList(_context.ProductModel, "ProductModelId", "Name", product.ProductModelId);
-            return View(product);
-        }
-
-        // GET: Products/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var product = await _context.Product.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            ViewData["ProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name", product.ProductCategoryId);
-            ViewData["ProductModelId"] = new SelectList(_context.ProductModel, "ProductModelId", "Name", product.ProductModelId);
-            return View(product);
-        }
-
-        // POST: Products/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductId,Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight,ProductCategoryId,ProductModelId,SellStartDate,SellEndDate,DiscontinuedDate,ThumbNailPhoto,ThumbnailPhotoFileName,Rowguid,ModifiedDate")] Product product)
-        {
-            if (id != product.ProductId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductExists(product.ProductId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ProductCategoryId"] = new SelectList(_context.ProductCategory, "ProductCategoryId", "Name", product.ProductCategoryId);
-            ViewData["ProductModelId"] = new SelectList(_context.ProductModel, "ProductModelId", "Name", product.ProductModelId);
-            return View(product);
-        }
-
-        // GET: Products/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var product = await _context.Product
-                .Include(p => p.ProductCategory)
-                .Include(p => p.ProductModel)
-                .FirstOrDefaultAsync(m => m.ProductId == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            return View(product);
-        }
-
-        // POST: Products/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var product = await _context.Product.FindAsync(id);
-            _context.Product.Remove(product);
-            await _context.SaveChangesAsync();
+            product.Id = $"product-{Guid.NewGuid()}";
+            product.DocType = "product";
+            product.ModifiedDate = DateTime.UtcNow;
+            await DenormalizeProductNames(product);
+            await _cosmosDb.CreateProductAsync(product);
             return RedirectToAction(nameof(Index));
         }
+        await PopulateDropdowns(product);
+        return View(product);
+    }
 
-        private bool ProductExists(int id)
+    // GET: Products/Edit/{id}
+    public async Task<IActionResult> Edit(string id)
+    {
+        if (id == null) return NotFound();
+
+        var product = await _cosmosDb.GetProductAsync(id);
+        if (product == null) return NotFound();
+
+        await PopulateDropdowns(product);
+        return View(product);
+    }
+
+    // POST: Products/Edit/{id}
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(string id,
+        [Bind("Id,Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight," +
+              "ProductCategoryId,ProductModelId,SellStartDate,SellEndDate," +
+              "DiscontinuedDate,ThumbnailPhotoFileName,ModifiedDate")] Product product)
+    {
+        if (id != product.Id) return NotFound();
+
+        if (ModelState.IsValid)
         {
-            return _context.Product.Any(e => e.ProductId == id);
+            product.DocType = "product";
+            product.ModifiedDate = DateTime.UtcNow;
+            await DenormalizeProductNames(product);
+
+            if (!await _cosmosDb.ProductExistsAsync(id))
+                return NotFound();
+
+            await _cosmosDb.UpdateProductAsync(product);
+            return RedirectToAction(nameof(Index));
+        }
+        await PopulateDropdowns(product);
+        return View(product);
+    }
+
+    // GET: Products/Delete/{id}
+    public async Task<IActionResult> Delete(string id)
+    {
+        if (id == null) return NotFound();
+
+        var product = await _cosmosDb.GetProductAsync(id);
+        if (product == null) return NotFound();
+
+        return View(product);
+    }
+
+    // POST: Products/Delete/{id}
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(string id)
+    {
+        await _cosmosDb.DeleteProductAsync(id);
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+
+    private async Task PopulateDropdowns(Product product = null)
+    {
+        var categories = await _cosmosDb.GetProductCategoriesAsync();
+        var models = await _cosmosDb.GetProductModelsAsync();
+
+        ViewData["ProductCategoryId"] = new SelectList(
+            categories, "Id", "Name", product?.ProductCategoryId);
+        ViewData["ProductModelId"] = new SelectList(
+            models, "Id", "Name", product?.ProductModelId);
+    }
+
+    /// <summary>
+    /// Resolves the denormalized CategoryName, ParentCategoryName, and ModelName
+    /// from the referenced category/model documents.
+    /// </summary>
+    private async Task DenormalizeProductNames(Product product)
+    {
+        if (!string.IsNullOrEmpty(product.ProductCategoryId))
+        {
+            var category = await _cosmosDb.GetProductCategoryAsync(product.ProductCategoryId);
+            product.CategoryName = category?.Name;
+            product.ParentCategoryName = category?.ParentCategoryName;
+        }
+        if (!string.IsNullOrEmpty(product.ProductModelId))
+        {
+            var model = await _cosmosDb.GetProductModelAsync(product.ProductModelId);
+            product.ModelName = model?.Name;
         }
     }
 }
