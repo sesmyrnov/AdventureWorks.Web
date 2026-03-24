@@ -17,6 +17,7 @@ Apply this prompt when a user asks to:
 2. **JOINs don't exist.** Every query runs against a single container. Design so the most frequent operations are single-partition point reads or queries.
 3. **Denormalization is expected.** Duplicate data deliberately when it eliminates cross-partition reads. Quantify the RU trade-off before committing.
 4. **Partition key is the #1 decision.** A wrong partition key cannot be changed without a data migration. Get it right using access pattern analysis.
+5. **Multi-entity containers with "type" discriminator attribute.** Entities sharing logical partition key AND similar access patterns can be stored in a single container. Multi-entity containers should have a type discriminator.
 
 ## Workflow
 
