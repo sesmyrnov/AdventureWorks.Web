@@ -1,0 +1,21 @@
+@model SalesOrderDocument
+
+@{
+    ViewData["Title"] = "Delete Order";
+}
+
+<h2>Delete</h2>
+<h3>Are you sure you want to delete order @Model.SalesOrderNumber?</h3>
+<div>
+    <dl class="dl-horizontal">
+        <dt>Order Date</dt><dd>@Model.OrderDate</dd>
+        <dt>Total Due</dt><dd>@Model.TotalDue.ToString("C")</dd>
+        <dt>Status</dt><dd>@Model.Status</dd>
+    </dl>
+    <form asp-action="Delete">
+        <input type="hidden" name="customerId" value="@Model.CustomerId" />
+        <input type="hidden" name="id" value="@Model.SalesOrderId" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index" asp-route-customerId="@Model.CustomerId">Back to Orders</a>
+    </form>
+</div>

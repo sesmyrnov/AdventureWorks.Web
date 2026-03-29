@@ -1,41 +1,45 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using AdventureWorks.Web.Models.Cosmos;
+using AdventureWorks.Web.Services.Repositories;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using AdventureWorks.Web.Models;
-using AdventureWorks.Web.Services;
+using Microsoft.Azure.Cosmos;
+using System.Net;
 
 namespace AdventureWorks.Web.Controllers;
 
 public class ProductsController : Controller
 {
-    private readonly CosmosDbService _cosmosDb;
+    private readonly IProductCatalogRepository _repo;
 
-    public ProductsController(CosmosDbService cosmosDb)
+    public ProductsController(IProductCatalogRepository repo)
     {
-        _cosmosDb = cosmosDb;
+        _repo = repo;
     }
 
     // GET: Products
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? continuationToken)
     {
-        var products = await _cosmosDb.GetProductsAsync();
-        return View(products);
+        var (items, nextToken) = await _repo.ListProductsAsync(continuationToken);
+        ViewData["ContinuationToken"] = nextToken;
+        return View(items);
     }
 
-    // GET: Products/Details/{id}
-    public async Task<IActionResult> Details(string id)
+    // GET: Products/Details/5
+    public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-
-        var product = await _cosmosDb.GetProductAsync(id);
+        var product = await _repo.GetProductAsync(id.Value);
         if (product == null) return NotFound();
-
         return View(product);
     }
 
     // GET: Products/Create
     public async Task<IActionResult> Create()
     {
-        await PopulateDropdowns();
+        var categories = await _repo.ListCategoriesAsync();
+        var models = await _repo.ListModelsAsync();
+        ViewData["ProductCategoryId"] = new SelectList(categories, "ProductCategoryId", "Name");
+        ViewData["ProductModelId"] = new SelectList(models, "ProductModelId", "Name");
         return View();
     }
 
@@ -43,110 +47,85 @@ public class ProductsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
-        [Bind("Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight," +
-              "ProductCategoryId,ProductModelId,SellStartDate,SellEndDate," +
-              "DiscontinuedDate,ThumbnailPhotoFileName")] Product product)
+        [Bind("ProductId,Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight,ProductCategoryId,ProductModelId,SellStartDate,SellEndDate,DiscontinuedDate")] ProductDocument product)
     {
         if (ModelState.IsValid)
         {
-            product.Id = $"product-{Guid.NewGuid()}";
-            product.DocType = "product";
-            product.ModifiedDate = DateTime.UtcNow;
-            await DenormalizeProductNames(product);
-            await _cosmosDb.CreateProductAsync(product);
+            await _repo.CreateProductAsync(product);
             return RedirectToAction(nameof(Index));
         }
-        await PopulateDropdowns(product);
+        var categories = await _repo.ListCategoriesAsync();
+        var models = await _repo.ListModelsAsync();
+        ViewData["ProductCategoryId"] = new SelectList(categories, "ProductCategoryId", "Name", product.ProductCategoryId);
+        ViewData["ProductModelId"] = new SelectList(models, "ProductModelId", "Name", product.ProductModelId);
         return View(product);
     }
 
-    // GET: Products/Edit/{id}
-    public async Task<IActionResult> Edit(string id)
+    // GET: Products/Edit/5
+    public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
-
-        var product = await _cosmosDb.GetProductAsync(id);
+        var product = await _repo.GetProductAsync(id.Value);
         if (product == null) return NotFound();
-
-        await PopulateDropdowns(product);
+        var categories = await _repo.ListCategoriesAsync();
+        var models = await _repo.ListModelsAsync();
+        ViewData["ProductCategoryId"] = new SelectList(categories, "ProductCategoryId", "Name", product.ProductCategoryId);
+        ViewData["ProductModelId"] = new SelectList(models, "ProductModelId", "Name", product.ProductModelId);
         return View(product);
     }
 
-    // POST: Products/Edit/{id}
+    // POST: Products/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string id,
-        [Bind("Id,Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight," +
-              "ProductCategoryId,ProductModelId,SellStartDate,SellEndDate," +
-              "DiscontinuedDate,ThumbnailPhotoFileName,ModifiedDate")] Product product)
+    public async Task<IActionResult> Edit(int id,
+        [Bind("ProductId,Name,ProductNumber,Color,StandardCost,ListPrice,Size,Weight,ProductCategoryId,ProductModelId,SellStartDate,SellEndDate,DiscontinuedDate")] ProductDocument product)
     {
-        if (id != product.Id) return NotFound();
+        if (id != product.ProductId) return NotFound();
 
         if (ModelState.IsValid)
         {
-            product.DocType = "product";
-            product.ModifiedDate = DateTime.UtcNow;
-            await DenormalizeProductNames(product);
+            try
+            {
+                var existing = await _repo.GetProductAsync(id);
+                if (existing == null) return NotFound();
 
-            if (!await _cosmosDb.ProductExistsAsync(id))
-                return NotFound();
+                product.Id = existing.Id;
+                product.PartitionKey = existing.PartitionKey;
+                product.ETag = existing.ETag;
+                product.SchemaVersion = existing.SchemaVersion;
 
-            await _cosmosDb.UpdateProductAsync(product);
+                await _repo.UpdateProductAsync(product);
+            }
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
+            {
+                if (!await _repo.ProductExistsAsync(product.ProductId))
+                    return NotFound();
+                throw;
+            }
             return RedirectToAction(nameof(Index));
         }
-        await PopulateDropdowns(product);
+        var categories = await _repo.ListCategoriesAsync();
+        var models = await _repo.ListModelsAsync();
+        ViewData["ProductCategoryId"] = new SelectList(categories, "ProductCategoryId", "Name", product.ProductCategoryId);
+        ViewData["ProductModelId"] = new SelectList(models, "ProductModelId", "Name", product.ProductModelId);
         return View(product);
     }
 
-    // GET: Products/Delete/{id}
-    public async Task<IActionResult> Delete(string id)
+    // GET: Products/Delete/5
+    public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
-
-        var product = await _cosmosDb.GetProductAsync(id);
+        var product = await _repo.GetProductAsync(id.Value);
         if (product == null) return NotFound();
-
         return View(product);
     }
 
-    // POST: Products/Delete/{id}
+    // POST: Products/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(string id)
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _cosmosDb.DeleteProductAsync(id);
+        await _repo.DeleteProductAsync(id);
         return RedirectToAction(nameof(Index));
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────────
-
-    private async Task PopulateDropdowns(Product product = null)
-    {
-        var categories = await _cosmosDb.GetProductCategoriesAsync();
-        var models = await _cosmosDb.GetProductModelsAsync();
-
-        ViewData["ProductCategoryId"] = new SelectList(
-            categories, "Id", "Name", product?.ProductCategoryId);
-        ViewData["ProductModelId"] = new SelectList(
-            models, "Id", "Name", product?.ProductModelId);
-    }
-
-    /// <summary>
-    /// Resolves the denormalized CategoryName, ParentCategoryName, and ModelName
-    /// from the referenced category/model documents.
-    /// </summary>
-    private async Task DenormalizeProductNames(Product product)
-    {
-        if (!string.IsNullOrEmpty(product.ProductCategoryId))
-        {
-            var category = await _cosmosDb.GetProductCategoryAsync(product.ProductCategoryId);
-            product.CategoryName = category?.Name;
-            product.ParentCategoryName = category?.ParentCategoryName;
-        }
-        if (!string.IsNullOrEmpty(product.ProductModelId))
-        {
-            var model = await _cosmosDb.GetProductModelAsync(product.ProductModelId);
-            product.ModelName = model?.Name;
-        }
     }
 }

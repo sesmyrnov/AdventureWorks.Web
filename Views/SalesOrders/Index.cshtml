@@ -1,0 +1,42 @@
+@model IEnumerable<SalesOrderDocument>
+
+@{
+    ViewData["Title"] = "Sales Orders";
+    var customer = ViewData["Customer"] as CustomerDocument;
+}
+
+<h2>Sales Orders @(customer != null ? $"for {customer.FirstName} {customer.LastName}" : "")</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Order Number</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th>Total Due</th>
+            <th>Ship Method</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.SalesOrderNumber</td>
+            <td>@item.OrderDate</td>
+            <td>@item.Status</td>
+            <td>@item.TotalDue.ToString("C")</td>
+            <td>@item.ShipMethod</td>
+            <td>
+                <a asp-action="Details" asp-route-customerId="@item.CustomerId" asp-route-id="@item.SalesOrderId">Details</a> |
+                <a asp-action="Delete" asp-route-customerId="@item.CustomerId" asp-route-id="@item.SalesOrderId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+@if (ViewData["ContinuationToken"] != null)
+{
+    <a asp-action="Index" asp-route-continuationToken="@ViewData["ContinuationToken"]" class="btn btn-default">Next Page &raquo;</a>
+}
+<div><a asp-action="Index" asp-controller="Customers">Back to Customers</a></div>

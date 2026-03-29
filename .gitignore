@@ -348,8 +348,3 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-docs/conference_wip.md
-docs/demo_recording_script.md
-docs/RDBMS_to_NoSQL_modernisation_eval_prompts_L0-L3.md
-docs/RDBMS_to_Cosmos.prompt.md
-docs/RDBMS_to_Cosmos.prompt.md

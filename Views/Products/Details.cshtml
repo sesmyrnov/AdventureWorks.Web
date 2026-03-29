@@ -1,102 +1,29 @@
-﻿@model AdventureWorks.Web.Models.Product
+@model ProductDocument
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Product Details";
 }
 
-<h2>Details</h2>
+<h2>Product Details</h2>
 
 <div>
-    <h4>Product</h4>
+    <h4>@Model.Name</h4>
     <hr />
     <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.ProductNumber)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.ProductNumber)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Color)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Color)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.StandardCost)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.StandardCost)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.ListPrice)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.ListPrice)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Size)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Size)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Weight)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Weight)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.SellStartDate)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.SellStartDate)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.SellEndDate)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.SellEndDate)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.DiscontinuedDate)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.DiscontinuedDate)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.ThumbnailPhotoFileName)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.ThumbnailPhotoFileName)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.ModifiedDate)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.ModifiedDate)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.CategoryName)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.CategoryName)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.ModelName)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.ModelName)
-        </dd>
+        <dt>Product Number</dt><dd>@Model.ProductNumber</dd>
+        <dt>Color</dt><dd>@Model.Color</dd>
+        <dt>Standard Cost</dt><dd>@Model.StandardCost.ToString("C")</dd>
+        <dt>List Price</dt><dd>@Model.ListPrice.ToString("C")</dd>
+        <dt>Size</dt><dd>@Model.Size</dd>
+        <dt>Weight</dt><dd>@Model.Weight</dd>
+        <dt>Category</dt><dd>@Model.Category?.Name</dd>
+        <dt>Model</dt><dd>@Model.Model?.Name</dd>
+        <dt>Sell Start Date</dt><dd>@Model.SellStartDate</dd>
+        <dt>Sell End Date</dt><dd>@Model.SellEndDate</dd>
+        <dt>Discontinued Date</dt><dd>@Model.DiscontinuedDate</dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
+    <a asp-action="Edit" asp-route-id="@Model.ProductId">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>

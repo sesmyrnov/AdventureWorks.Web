@@ -1,35 +1,26 @@
-﻿using Azure.Identity;
-using Microsoft.Azure.Cosmos;
-using AdventureWorks.Web.Services;
+﻿using AdventureWorks.Web.Services;
+using AdventureWorks.Web.Services.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ─── Cosmos DB ───────────────────────────────────────────────────────
-var cosmosSection = builder.Configuration.GetSection("CosmosDb");
-var endpoint = cosmosSection["Endpoint"];
-var databaseName = cosmosSection["DatabaseName"];
-var productsContainer = cosmosSection["ProductsContainerName"];
-var customersContainer = cosmosSection["CustomersContainerName"];
-
-var cosmosClient = new CosmosClient(endpoint, new DefaultAzureCredential(),
-    new CosmosClientOptions
-    {
-        SerializerOptions = new CosmosSerializationOptions
-        {
-            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-        }
-    });
-
-builder.Services.AddSingleton(cosmosClient);
-builder.Services.AddSingleton(new CosmosDbService(
-    cosmosClient, databaseName, productsContainer, customersContainer));
-
-// ─── MVC ─────────────────────────────────────────────────────────────
+// Services
 builder.Services.AddControllersWithViews();
+
+// Cosmos DB — singleton CosmosClient
+builder.Services.AddSingleton<ICosmosDbService, CosmosDbService>();
+
+// Repositories — scoped
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IProductCatalogRepository, ProductCatalogRepository>();
+builder.Services.AddScoped<ISalesOrderRepository, SalesOrderRepository>();
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
@@ -38,7 +29,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

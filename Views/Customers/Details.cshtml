@@ -1,96 +1,57 @@
-﻿@model AdventureWorks.Web.Models.Customer
+@model CustomerDocument
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Customer Details";
 }
 
-<h2>Details</h2>
+<h2>Customer Details</h2>
 
 <div>
-    <h4>Customer</h4>
+    <h4>@Model.FirstName @Model.LastName</h4>
     <hr />
     <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.NameStyle)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.NameStyle)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.FirstName)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.FirstName)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.MiddleName)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.MiddleName)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.LastName)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.LastName)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Suffix)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Suffix)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.CompanyName)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.CompanyName)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.SalesPerson)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.SalesPerson)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.EmailAddress)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.EmailAddress)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Phone)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Phone)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.PasswordHash)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.PasswordHash)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.PasswordSalt)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.PasswordSalt)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.ModifiedDate)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.ModifiedDate)
-        </dd>
+        <dt>Title</dt><dd>@Model.Title</dd>
+        <dt>First Name</dt><dd>@Model.FirstName</dd>
+        <dt>Middle Name</dt><dd>@Model.MiddleName</dd>
+        <dt>Last Name</dt><dd>@Model.LastName</dd>
+        <dt>Suffix</dt><dd>@Model.Suffix</dd>
+        <dt>Company</dt><dd>@Model.CompanyName</dd>
+        <dt>Sales Person</dt><dd>@Model.SalesPerson</dd>
+        <dt>Email</dt><dd>@Model.EmailAddress</dd>
+        <dt>Phone</dt><dd>@Model.Phone</dd>
     </dl>
+
+    <h4>Addresses</h4>
+    @if (Model.Addresses != null && Model.Addresses.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th><th>Address</th><th>City</th><th>State</th><th>Postal Code</th><th>Country</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var addr in Model.Addresses)
+                {
+                    <tr>
+                        <td>@addr.AddressType</td>
+                        <td>@addr.AddressLine1 @addr.AddressLine2</td>
+                        <td>@addr.City</td>
+                        <td>@addr.StateProvince</td>
+                        <td>@addr.PostalCode</td>
+                        <td>@addr.CountryRegion</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No addresses on file.</p>
+    }
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
+    <a asp-action="Edit" asp-route-id="@Model.CustomerId">Edit</a> |
+    <a asp-controller="SalesOrders" asp-action="Index" asp-route-customerId="@Model.CustomerId">Orders</a> |
     <a asp-action="Index">Back to List</a>
 </div>

@@ -1,0 +1,371 @@
+[
+  {
+    "id": "category-1",
+    "type": "productCategory",
+    "productCategoryId": 1,
+    "parentProductCategoryId": null,
+    "parentCategoryName": null,
+    "name": "Bikes",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-2",
+    "type": "productCategory",
+    "productCategoryId": 2,
+    "parentProductCategoryId": null,
+    "parentCategoryName": null,
+    "name": "Components",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-3",
+    "type": "productCategory",
+    "productCategoryId": 3,
+    "parentProductCategoryId": null,
+    "parentCategoryName": null,
+    "name": "Clothing",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-4",
+    "type": "productCategory",
+    "productCategoryId": 4,
+    "parentProductCategoryId": null,
+    "parentCategoryName": null,
+    "name": "Accessories",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-5",
+    "type": "productCategory",
+    "productCategoryId": 5,
+    "parentProductCategoryId": 1,
+    "parentCategoryName": "Bikes",
+    "name": "Mountain Bikes",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-6",
+    "type": "productCategory",
+    "productCategoryId": 6,
+    "parentProductCategoryId": 1,
+    "parentCategoryName": "Bikes",
+    "name": "Road Bikes",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-7",
+    "type": "productCategory",
+    "productCategoryId": 7,
+    "parentProductCategoryId": 1,
+    "parentCategoryName": "Bikes",
+    "name": "Touring Bikes",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-8",
+    "type": "productCategory",
+    "productCategoryId": 8,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Handlebars",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-9",
+    "type": "productCategory",
+    "productCategoryId": 9,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Bottom Brackets",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-10",
+    "type": "productCategory",
+    "productCategoryId": 10,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Brakes",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-11",
+    "type": "productCategory",
+    "productCategoryId": 11,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Chains",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-12",
+    "type": "productCategory",
+    "productCategoryId": 12,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Cranksets",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-13",
+    "type": "productCategory",
+    "productCategoryId": 13,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Derailleurs",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-14",
+    "type": "productCategory",
+    "productCategoryId": 14,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Forks",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-15",
+    "type": "productCategory",
+    "productCategoryId": 15,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Headsets",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-16",
+    "type": "productCategory",
+    "productCategoryId": 16,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Mountain Frames",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-17",
+    "type": "productCategory",
+    "productCategoryId": 17,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Pedals",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-18",
+    "type": "productCategory",
+    "productCategoryId": 18,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Road Frames",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-19",
+    "type": "productCategory",
+    "productCategoryId": 19,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Saddles",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-20",
+    "type": "productCategory",
+    "productCategoryId": 20,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Touring Frames",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-21",
+    "type": "productCategory",
+    "productCategoryId": 21,
+    "parentProductCategoryId": 2,
+    "parentCategoryName": "Components",
+    "name": "Wheels",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-22",
+    "type": "productCategory",
+    "productCategoryId": 22,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Bib-Shorts",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-23",
+    "type": "productCategory",
+    "productCategoryId": 23,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Caps",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-24",
+    "type": "productCategory",
+    "productCategoryId": 24,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Gloves",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-25",
+    "type": "productCategory",
+    "productCategoryId": 25,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Jerseys",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-26",
+    "type": "productCategory",
+    "productCategoryId": 26,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Shorts",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-27",
+    "type": "productCategory",
+    "productCategoryId": 27,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Socks",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-28",
+    "type": "productCategory",
+    "productCategoryId": 28,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Tights",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-29",
+    "type": "productCategory",
+    "productCategoryId": 29,
+    "parentProductCategoryId": 3,
+    "parentCategoryName": "Clothing",
+    "name": "Vests",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-30",
+    "type": "productCategory",
+    "productCategoryId": 30,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Bike Racks",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-31",
+    "type": "productCategory",
+    "productCategoryId": 31,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Bike Stands",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-32",
+    "type": "productCategory",
+    "productCategoryId": 32,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Bottles and Cages",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-33",
+    "type": "productCategory",
+    "productCategoryId": 33,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Cleaners",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-34",
+    "type": "productCategory",
+    "productCategoryId": 34,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Fenders",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-35",
+    "type": "productCategory",
+    "productCategoryId": 35,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Helmets",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-36",
+    "type": "productCategory",
+    "productCategoryId": 36,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Hydration Packs",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-37",
+    "type": "productCategory",
+    "productCategoryId": 37,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Lights",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-38",
+    "type": "productCategory",
+    "productCategoryId": 38,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Locks",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-39",
+    "type": "productCategory",
+    "productCategoryId": 39,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Panniers",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-40",
+    "type": "productCategory",
+    "productCategoryId": 40,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Pumps",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  },
+  {
+    "id": "category-41",
+    "type": "productCategory",
+    "productCategoryId": 41,
+    "parentProductCategoryId": 4,
+    "parentCategoryName": "Accessories",
+    "name": "Tires and Tubes",
+    "modifiedDate": "2002-06-01T00:00:00Z"
+  }
+]

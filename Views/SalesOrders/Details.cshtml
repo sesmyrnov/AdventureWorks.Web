@@ -1,0 +1,52 @@
+@model SalesOrderDocument
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<h2>Order @Model.SalesOrderNumber</h2>
+
+<div>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>Order Date</dt><dd>@Model.OrderDate</dd>
+        <dt>Due Date</dt><dd>@Model.DueDate</dd>
+        <dt>Ship Date</dt><dd>@Model.ShipDate</dd>
+        <dt>Status</dt><dd>@Model.Status</dd>
+        <dt>Ship Method</dt><dd>@Model.ShipMethod</dd>
+        <dt>Sub Total</dt><dd>@Model.SubTotal.ToString("C")</dd>
+        <dt>Tax</dt><dd>@Model.TaxAmt.ToString("C")</dd>
+        <dt>Freight</dt><dd>@Model.Freight.ToString("C")</dd>
+        <dt>Total Due</dt><dd>@Model.TotalDue.ToString("C")</dd>
+    </dl>
+
+    @if (Model.ShipToAddress != null)
+    {
+        <h4>Ship To</h4>
+        <p>@Model.ShipToAddress.AddressLine1 @Model.ShipToAddress.AddressLine2<br/>
+           @Model.ShipToAddress.City, @Model.ShipToAddress.StateProvince @Model.ShipToAddress.PostalCode</p>
+    }
+
+    <h4>Order Details</h4>
+    <table class="table">
+        <thead>
+            <tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Discount</th><th>Line Total</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var d in Model.Details)
+            {
+                <tr>
+                    <td>@d.ProductName (@d.ProductNumber)</td>
+                    <td>@d.OrderQty</td>
+                    <td>@d.UnitPrice.ToString("C")</td>
+                    <td>@d.UnitPriceDiscount.ToString("P")</td>
+                    <td>@d.LineTotal.ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div>
+    <a asp-action="Index" asp-route-customerId="@Model.CustomerId">Back to Orders</a> |
+    <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.CustomerId">Customer</a>
+</div>

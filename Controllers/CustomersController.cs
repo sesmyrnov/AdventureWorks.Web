@@ -1,118 +1,112 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using AdventureWorks.Web.Models;
-using AdventureWorks.Web.Services;
+using AdventureWorks.Web.Models.Cosmos;
+using AdventureWorks.Web.Services.Repositories;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using System.Net;
 
 namespace AdventureWorks.Web.Controllers;
 
 public class CustomersController : Controller
 {
-    private readonly CosmosDbService _cosmosDb;
+    private readonly ICustomerRepository _repo;
 
-    public CustomersController(CosmosDbService cosmosDb)
+    public CustomersController(ICustomerRepository repo)
     {
-        _cosmosDb = cosmosDb;
+        _repo = repo;
     }
 
     // GET: Customers
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? continuationToken)
     {
-        var customers = await _cosmosDb.GetCustomersAsync();
-        return View(customers);
+        var (items, nextToken) = await _repo.ListCustomersAsync(continuationToken);
+        ViewData["ContinuationToken"] = nextToken;
+        return View(items);
     }
 
-    // GET: Customers/Details/{id}
-    public async Task<IActionResult> Details(string id)
+    // GET: Customers/Details/5
+    public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-
-        var customer = await _cosmosDb.GetCustomerAsync(id);
+        var customer = await _repo.GetCustomerAsync(id.Value);
         if (customer == null) return NotFound();
-
         return View(customer);
     }
 
     // GET: Customers/Create
-    public IActionResult Create()
-    {
-        return View();
-    }
+    public IActionResult Create() => View();
 
     // POST: Customers/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
-        [Bind("NameStyle,Title,FirstName,MiddleName,LastName,Suffix," +
-              "CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt")] Customer customer)
+        [Bind("CustomerId,NameStyle,Title,FirstName,MiddleName,LastName,Suffix,CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt")] CustomerDocument customer)
     {
         if (ModelState.IsValid)
         {
-            var newId = Guid.NewGuid().ToString();
-            customer.Id = newId;
-            customer.CustomerId = newId;
-            customer.DocType = "customer";
-            customer.ModifiedDate = DateTime.UtcNow;
-            customer.Addresses ??= new List<CustomerAddress>();
-            await _cosmosDb.CreateCustomerAsync(customer);
+            await _repo.CreateCustomerAsync(customer);
             return RedirectToAction(nameof(Index));
         }
         return View(customer);
     }
 
-    // GET: Customers/Edit/{id}
-    public async Task<IActionResult> Edit(string id)
+    // GET: Customers/Edit/5
+    public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
-
-        var customer = await _cosmosDb.GetCustomerAsync(id);
+        var customer = await _repo.GetCustomerAsync(id.Value);
         if (customer == null) return NotFound();
-
         return View(customer);
     }
 
-    // POST: Customers/Edit/{id}
+    // POST: Customers/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string id,
-        [Bind("Id,CustomerId,NameStyle,Title,FirstName,MiddleName,LastName,Suffix," +
-              "CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt,ModifiedDate")] Customer customer)
+    public async Task<IActionResult> Edit(int id,
+        [Bind("CustomerId,NameStyle,Title,FirstName,MiddleName,LastName,Suffix,CompanyName,SalesPerson,EmailAddress,Phone,PasswordHash,PasswordSalt")] CustomerDocument customer)
     {
-        if (id != customer.Id) return NotFound();
+        if (id != customer.CustomerId) return NotFound();
 
         if (ModelState.IsValid)
         {
-            customer.DocType = "customer";
-            customer.ModifiedDate = DateTime.UtcNow;
+            try
+            {
+                var existing = await _repo.GetCustomerAsync(id);
+                if (existing == null) return NotFound();
 
-            if (!await _cosmosDb.CustomerExistsAsync(id))
-                return NotFound();
+                customer.Id = existing.Id;
+                customer.ETag = existing.ETag;
+                customer.Addresses = existing.Addresses;
+                customer.Ttl = existing.Ttl;
+                customer.SchemaVersion = existing.SchemaVersion;
 
-            // Preserve existing addresses (not edited in this form)
-            var existing = await _cosmosDb.GetCustomerAsync(id);
-            customer.Addresses = existing?.Addresses ?? new List<CustomerAddress>();
-
-            await _cosmosDb.UpdateCustomerAsync(customer);
+                await _repo.UpdateCustomerAsync(customer);
+            }
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
+            {
+                if (!await _repo.CustomerExistsAsync(customer.CustomerId))
+                    return NotFound();
+                throw;
+            }
             return RedirectToAction(nameof(Index));
         }
         return View(customer);
     }
 
-    // GET: Customers/Delete/{id}
-    public async Task<IActionResult> Delete(string id)
+    // GET: Customers/Delete/5
+    public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
-
-        var customer = await _cosmosDb.GetCustomerAsync(id);
+        var customer = await _repo.GetCustomerAsync(id.Value);
         if (customer == null) return NotFound();
-
         return View(customer);
     }
 
-    // POST: Customers/Delete/{id}
+    // POST: Customers/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(string id)
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _cosmosDb.DeleteCustomerAsync(id);
+        await _repo.DeleteCustomerAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

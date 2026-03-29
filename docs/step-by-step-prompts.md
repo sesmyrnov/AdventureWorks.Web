@@ -1,340 +1,176 @@
-# AdventureWorks SQL Server → Cosmos DB Migration — Step-by-Step Prompts
 
-A reproducible, prompt-by-prompt guide for migrating the AdventureWorks ASP.NET Core MVC app from SQL Server / Entity Framework Core to Azure Cosmos DB for NoSQL using GitHub Copilot.
+# AdventureWorksLT → Azure Cosmos DB NoSQL Migration: Step-by-Step Prompts
 
----
-
-## Prerequisites
-
-| Requirement | Details |
-|---|---|
-| Source repo | AdventureWorks.Web — ASP.NET Core 2.1 MVC + EF Core + SQL Server |
-| Azure subscription | With permissions to create Cosmos DB resources |
-| Azure CLI / `azd` | Authenticated (`az login` / `azd login`) |
-| .NET 9.0 SDK | Installed locally |
-| GitHub Copilot | Agent mode in VS Code |
+This document captures the exact sequential prompts used to migrate the AdventureWorksLT application from SQL Server/EF Core to Azure Cosmos DB NoSQL using GitHub Copilot as an AI coding agent.
 
 ---
 
-## Phase 1 — Data Discovery & Migration Plan
+## Prompt 1 — Migration Assessment Report
 
-### Step 1: Generate a Data Discovery Report
+> **Prompt:** Generate an assessment report for migrating the AdventureWorksLT application from its current SQL Server/relational database backend to Azure Cosmos DB NoSQL. Include analysis of the current data model (see Models/ and AdventureWorksLT/AdventureworksLT.sql), access patterns (see Controllers/), dependencies, and migration risks.
+Use access-patterns-tempalate.md and volumentrics-template.md as examples to document discovered access patterns and volumetrics projections based on sample data for 2 year retention.
 
-> **Prompt:**
-> ```
-> Analyze the existing codebase and schema/ folder. Produce a data discovery
-> report covering: all SQL tables, column types, row counts (from CSV files),
-> relationships (PKs/FKs), indexes, and access patterns used by the controllers
-> and views.
-> ```
-
-**What Copilot does:**
-- Reads all model files (`Models/*.cs`), the EF Core `DbContext`, controllers, views, and CSV files in `schema/`
-- Identifies 11 SQL tables, their columns, relationships, and how the app accesses them
-- Produces a discovery report documenting the current state
-
----
-
-### Step 2: Generate the 8-Phase Migration Plan
-
-> **Prompt:**
-> ```
-> Read the cosmos-nosql-copilot skill instructions. Using the data discovery
-> report and the skill's methodology, generate a complete 8-phase migration
-> plan in docs/migration_plan.md covering:
->   Phase 1 — Relational Inventory
->   Phase 2 — Schema Translation
->   Phase 3 — Aggregate / Document Design
->   Phase 4 — Access-Pattern Catalogue
->   Phase 5 — Partition-Key Selection
->   Phase 6 — Access-Pattern → SDK-Call Mapping
->   Phase 7 — Migration Strategy
->   Phase 8 — Validation Checklist
-> Include concrete JSON document examples for every document type.
-> ```
-
-**What Copilot does:**
-- Reads the `cosmosdb-best-practices` skill for methodology guidance
-- Maps 11 SQL tables → 2 Cosmos containers (`products`, `customers`)
-- Designs 5 document types: `product`, `productCategory`, `productModel`, `customer`, `salesOrder`
-- Defines partition keys (`/id` for products, `/customerId` for customers)
-- Documents denormalization strategy, embedding decisions, and ID schemes
-- Outputs `docs/migration_plan.md` (~930 lines)
-
-**Key design decisions captured:**
-- Category ID offset scheme: parent categories keep IDs 1–4, subcategories get `subcategoryId + 100`
-- Product IDs: `product-{ProductID}`, Category IDs: `category-{id}`, Model IDs: `model-{ProductModelID}`
-- Customer/SalesOrder IDs: string of the integer ID
-- Addresses embedded as arrays in customer documents
-- Line items embedded as arrays in sales order documents
-- Ship method, customer name, product name denormalized into orders
-
----
-
-## Phase 2 — Infrastructure Provisioning
-
-### Step 3: Create Bicep Infrastructure
-
-> **Prompt:**
-> ```
-> Create Bicep infrastructure in infra/ to provision:
->   - Azure Cosmos DB for NoSQL account (Serverless capacity)
->   - Database: adventureworks
->   - Container: products (partition key /id)
->   - Container: customers (partition key /customerId)
->   - Entra ID RBAC: assign Cosmos DB Built-in Data Contributor role
->     to my user principal
-> Use Azure Verified Modules where available.
-> ```
-
-**What Copilot does:**
-- Creates `infra/modules/cosmos.bicep` — Cosmos account, database, and 2 containers
-- Creates `infra/main.bicep` — orchestrates modules and role assignment
-- Creates `infra/main.bicepparam` — parameterizes endpoint, location, principal ID
-- Configures serverless capacity mode, camelCase serialization, automatic indexing
-
-**Files created:**
+Expected output(s): 
 ```
-infra/
-  main.bicep
-  main.bicepparam
-  modules/
-    cosmos.bicep
+docs/cosmos-db-migration-assessment.md
+
+docs/access-patterns.md
+
+docs/volumentrics.md
+```
+---
+
+## Prompt 2 — Schema & Access Patterns Conversion Plan
+
+> **Prompt:** Based on the assessment report, create a detailed schema and access patterns conversion plan for Cosmos DB NoSQL. Design the document models, partition keys, container strategy, indexing policies, and query mappings.
+-	Exclude ErrorLog, BuildVersion: Operational/metadata tables from schema/access patterns conversion plan ( we will not migrate them to Cosmos NoSQL).
+-	Add SalesOrder Header/Details tables for Data migration to Cosmos NoSQL scope and add respective controller to scope of App Modernization plans ( re-analyze and update respective file). Evaluate based on datamodel accounting existing Customer domain/entity decisions for optimization. Order search will be always for a specific CustomerId 
+-	Evaluate combining all product/categories/models related containers to gain some efficiencies
+
+
+Expected output(s):
+```
+docs/schema_and_access_patterns_conversion_plan.md
+```
+---
+
+## Prompt 3 — Bicep Infrastructure-as-Code
+
+> **Prompt:** Based on schema_and_access_patterns_conversion_plan.md - generate Bicep infrastructure-as-code to provision the Cosmos DB account, database, and containers with the designed schema, partition keys, and indexing policies. 
+Use EntraID auth (DefaultAzureCredential) – grant standard ControlPlane Operator and DataPlane Contributor R/W RBAC roles.
+
+
+Expected output(s):
+```
+- `infra/main.bicep` — Cosmos DB account, database, containers, indexing policies, RBAC role assignments
+- `infra/main.bicepparam` — Deployment parameters
+```
+
+**Include following variables in Bicep parameter file** (in `infra/main.bicepparam`):
+```
+param location = '<azure-region>'                  # e.g., 'eastus2'
+param cosmosAccountName = '<cosmos-account-name>'   # e.g., 'myapp-cosmos-01'
+param databaseName = '<database-name>'              # e.g., 'adventureworks'
+param principalId = '<entra-principal-id>'          # e.g., '00000000-0000-0000-0000-000000000000'
+param tags = {
+  owner: '<owner-alias>'
+}
+```
+
+use following parms for deployment script generation:
+```
+resource-group '<your-rg>'
+```
+---
+
+## Prompt 4 — Deploy Infrastructure to Azure
+
+> **Prompt:** Deploy the Bicep infrastructure to Azure to provision the Cosmos DB account, database, and containers.
+- Create the resource group if it does not exist.
+- Deploy the main.bicep template at the resource group scope with all required parameters.
+- Verify that the Cosmos DB account, database, and containers are provisioned with the correct partition keys, indexing policies, and RBAC roles.
+- Output the deployment and verification commands and results.
+
+
+**Deployment command:**
+```bash
+az deployment group create \
+  --resource-group <resource-group-name> \
+  --template-file infra/main.bicep \
+  --parameters infra/main.bicepparam
 ```
 
 ---
 
-### Step 4: Deploy Infrastructure
+## Prompt 5 — Convert CSV sample data to JSON and load into target containers
 
-> **Prompt:**
-> ```
-> Deploy the Bicep infrastructure to Azure.
-> Resource group: ssm-cosmosdb-adventureworks01-rg
-> Location: eastus2
-> ```
-
-**What Copilot does:**
-- Runs `az deployment group create` targeting the resource group
-- Provisions the Cosmos DB account (`ssm-cosmos-adventureworks01`), database, and containers
-- Assigns RBAC role for Entra ID authentication
+> **Prompt:** Convert CSV sample data to JSON and load into target containers. Use CSV sample data files to generate target JSON Documents for each Entity following the schema defined in the schema_and_access_patterns_conversion_plan.md and load them into created Cosmos DB containers.Validate document counts match expected volumetrics.
+- Save generated JSON in `/DataMigration/data` before loading to Cosmos DB and any code generated for data conversion in  `/DataMigration/tools`.
 
 ---
 
-### Step 5: Smoke Test SDK Connectivity
+## Prompt 6 — Application Conversion Plan Document
 
-> **Prompt:**
-> ```
-> Create a smoke test in infra/smoke-test/ that uses the Cosmos DB SDK
-> with DefaultAzureCredential to connect, list containers, and upsert
-> then read back a test document. Run it to verify RBAC auth works.
-> ```
+> **Prompt:** Read all source code files (controllers, models, views, configuration, startup),  schema_and_access_patterns_conversion_plan.md and generate a comprehensive application conversion plan document detailing every code change needed to convert the application to Cosmos DB (switch from EF Core to native Cosmos DB .NET SDK), convert Cosmos DB client Auth to use Entra ID auth.
+>The plan must explicitly address:
+> - **Newtonsoft.Json dependency:** The Cosmos DB .NET SDK v3.x has a hard runtime
+>   dependency on `Newtonsoft.Json >= 10.0.2`. Add it as an explicit PackageReference
+>   (e.g., v13.0.3). Do NOT rely on `AzureCosmosDisableNewtonsoftJsonCheck` — that
+>   only suppresses the build error but still crashes at runtime.
+> - **CosmosClientBuilder namespace:** `CosmosClientBuilder` lives in
+>   `Microsoft.Azure.Cosmos.Fluent`, not `Microsoft.Azure.Cosmos`. Include the
+>   correct `using` directive in any service that builds the client.
+> - **Nullable reference types:** When upgrading to net8.0+ with `<Nullable>enable</Nullable>`,
+>   audit all existing non-model files (e.g., `ErrorViewModel.cs`) for properties
+>   that must become nullable (`string?`) to avoid CS8618 warnings.
 
-**What Copilot does:**
-- Creates a small .NET console app in `infra/smoke-test/`
-- Connects using `DefaultAzureCredential` (no connection strings)
-- Verifies both containers exist, upserts a test doc, reads it back
-- Confirms SDK + RBAC authentication works end-to-end
 
+Expected output(s):
+```
+docs/application_conversion_plan.md
+```
 ---
 
-## Phase 3 — Application Code Migration
+## Prompt 7 — Execute Application Conversion
 
-### Step 6: Rewrite Models for Cosmos DB
+> **Prompt:** Following the final schema_and_access_patterns_conversion_plan.md and application_conversion_plan.md — rewrite the application for Cosmos DB NoSQL, start application and run API validation tests.
 
-> **Prompt:**
-> ```
-> Following the migration plan document models, rewrite the application for
-> Cosmos DB:
-> 1. Update csproj to net9.0, remove EF Core, add Microsoft.Azure.Cosmos
->    and Azure.Identity packages
-> 2. Delete obsolete model files that are no longer needed
-> 3. Rewrite remaining models (Product, ProductCategory, ProductModel,
->    Customer) with string IDs, docType discriminator, and denormalized fields
-> 4. Create new SalesOrder model with embedded line items and address snapshots
-> 5. Create CosmosDbService with full CRUD operations
-> 6. Rewrite Program.cs for .NET 9.0 minimal hosting with Cosmos client
->    registration using DefaultAzureCredential and camelCase serialization
-> 7. Rewrite all 4 controllers to use CosmosDbService
-> 8. Update all views for the new model shapes
-> Build and confirm 0 errors.
-> ```
-
-**What Copilot does:**
-
-*Project file:*
-- Updates `AdventureWorks.Web.csproj` to `net9.0`
-- Removes EF Core packages, adds `Microsoft.Azure.Cosmos`, `Azure.Identity`
-
-*Models deleted (9 files):*
-- `Address.cs`, `BuildVersion.cs`, `CustomerAddress.cs`, `ErrorLog.cs`
-- `ProductDescription.cs`, `ProductModelProductDescription.cs`
-- `SalesOrderDetail.cs`, `SalesOrderHeader.cs`, `sampledbContext.cs`
-
-*Models rewritten (4 files):*
-- `Product.cs` — string `Id`, `DocType`, denormalized `CategoryName`, `ParentCategoryName`, `ModelName`
-- `ProductCategory.cs` — string `Id`, `DocType`, nullable `ParentProductCategoryId`, `ParentCategoryName`
-- `ProductModel.cs` — string `Id`, `DocType`, embedded `Descriptions` list
-- `Customer.cs` — string `Id`/`CustomerId`, `DocType`, embedded `Addresses` list
-
-*New model (1 file):*
-- `SalesOrder.cs` — embedded `LineItems` list, `BillToAddress`/`ShipToAddress` objects, denormalized `CustomerName`, `ShipMethod`, `ProductName`
-
-*New service:*
-- `Services/CosmosDbService.cs` — generic CRUD using Cosmos SDK, query by docType, partition key routing
-
-*Rewritten:*
-- `Program.cs` — .NET 9.0 minimal hosting, `CosmosClient` DI registration with `DefaultAzureCredential`
-- All 4 controllers (`HomeController`, `ProductCategoriesController`, `ProductsController`, `CustomersController`)
-- All views updated for new property names and string IDs
-
-**Build result:** 0 errors
-
----
-
-## Phase 4 — Data Migration
-
-### Step 7: Create Data Migration Console App
-
-> **Prompt:**
-> ```
-> Create a data migration console app in tools/DataMigration/ based on the
-> migration plan. Requirements:
-> 1. Read CSV files from schema/ folder handling BOTH tab-delimited AND
->    pipe-delimited (+| field separator, &| row terminator) formats
-> 2. Transform data into target document models — joining across CSVs to
->    denormalize (e.g., Person + EmailAddress + Phone + Address → Customer;
->    SalesOrderHeader + Details + ShipMethod + Address → SalesOrder;
->    ProductCategory + ProductSubcategory with ID offset → categories)
-> 3. Use native Cosmos DB SDK with AllowBulkExecution = true
-> 4. Set docType discriminator on every document
-> 5. Use CosmosPropertyNamingPolicy.CamelCase
-> 6. Batch sizes: categories (all at once), products (100/batch),
->    customers (100/batch), orders (50/batch)
-> 7. Report progress and error counts
 >
-> Run the migration and verify document counts match expected:
->   products container: 41 categories + 504 products = 545
->   customers container: 19,119 customers + 31,465 orders = 50,584
-> ```
+> **Success Criteria’s:**
+> - Goal 1 — Successful build with 0 errors
+> - Goal 2 — Application starts successfully and returns local URL for web testing
+> - Goal 3 — API validation tests passed successfully
+>
+> **API Validation Test Requirements:**
+> - **Dynamic ID discovery:** Tests must extract entity IDs from listing pages
+>   (e.g., parse hrefs from the Categories Index) rather than hardcoding
+>   ID-to-name assumptions. Migrated data may sort/number differently.
+> - **Route convention awareness:** Use MVC default routing
+>   `{controller}/{action}/{id}`. For entities with composite keys (e.g.,
+>   SalesOrders needing both orderId and customerId), the route `{id}` param
+>   carries the primary key and additional keys go as query params
+>   (`/SalesOrders/Details/{orderId}?customerId={cid}`).
+> - **BaseUrl from launchSettings:** Read the configured port from
+>   `Properties/launchSettings.json` rather than assuming a fixed port.
 
-**What Copilot does:**
 
-*CSV format analysis:*
-- Reads first lines of all 18 CSV files to determine delimiter format
-- Identifies tab-delimited files: ProductCategory, ProductSubcategory, Product, ProductDescription, PMPDC, Customer, Address, SalesOrderHeader, SalesOrderDetail, ShipMethod, StateProvince, AddressType
-- Identifies pipe-delimited files (`+|`/`&|`): ProductModel, Person, EmailAddress, Password, PersonPhone, BusinessEntityAddress
 
-*Files created:*
-```
-tools/DataMigration/
-  DataMigration.csproj    — net9.0, Azure.Identity, Microsoft.Azure.Cosmos
-  Program.cs              — ~850 lines, full ETL pipeline
-```
+### Goal 1 — Build Result
+- `dotnet build` → **Build succeeded with 0 errors**
 
-*Migration pipeline (Program.cs):*
-1. **CSV parsing** — two parsers: `ReadTabFile()` for tab-delimited, `ReadPipeFile()` for `+|`/`&|` pipe-delimited
-2. **Lookup dictionaries** — builds 18+ in-memory dictionaries for joins and denormalization
-3. **Transform & load** — 5 document types:
-   - `productCategory` (41 docs) — parent categories + subcategories with ID+100 offset
-   - `productModel` (128 docs) — with embedded descriptions array
-   - `product` (504 docs) — with denormalized category/model names
-   - `customer` (19,119 docs) — joined from Customer + Person + Email + Phone + Password + Address tables, filtering out store-only customers
-   - `salesOrder` (31,465 docs) — joined from Header + Detail + ShipMethod + Address, with embedded line items and address snapshots
-4. **Bulk upsert** — `AllowBulkExecution = true`, concurrent `Task.WhenAll`, 429 retry handling
+### Goal 2 — Application Start
+- `dotnet run --urls "https://localhost:<port>"` → **Application running and responding to requests**
 
-**Migration result:**
-```
-Products container:  673 documents (41 categories + 128 models + 504 products)
-Customers container: 50,584 documents (19,119 customers + 31,465 orders)
-Grand total:         51,257 documents
-Errors:              0
-Elapsed:             00:03:41
-```
+### Goal 3 — Validation Tests (9/9 PASS)
 
----
-
-## Phase 5 — End-to-End Verification
-
-### Step 8: Start App and Test All Endpoints
-
-> **Prompt:**
-> ```
-> 1. Start the web app with dotnet run
-> 2. Test all controller endpoints:
->    - GET / (ProductCategories/Index) — verify row count matches categories
->    - GET /Products — verify row count matches products
->    - GET /Products/Details/680 — verify "HL Road Frame" appears
->    - GET /Customers/Details/11000 — verify "Jon Yang" appears
-> 3. Report results
-> ```
-
-**What Copilot does:**
-- Starts the app with `dotnet run` (Kestrel on `http://localhost:5000` / `https://localhost:5001`)
-- Issues HTTP requests to each endpoint and validates responses
-
-**Test results:**
-
-| Endpoint | Status | Validation |
-|---|---|---|
-| `GET /` (ProductCategories/Index) | 200 | **41 table rows** — matches Cosmos |
-| `GET /Products` | 200 | **504 table rows** — matches Cosmos |
-| `GET /Products/Details/product-680` | 200 | **"HL Road Frame" found** |
-| `GET /Customers/Details/11000` | 200 | **"Jon Yang" found** |
-
-All endpoints returned HTTP 200 with expected data. Migration complete.
+| Test | Endpoint | Status | Verified |
+|------|----------|--------|----------|
+| ProductCategories Index | `/ProductCategories` | 200 PASS | Categories listed, parent names populated |
+| ProductCategories Details | `/ProductCategories/Details/{id}` | 200 PASS | Point read, parent category name shown |
+| Products Index | `/Products` | 200 PASS | Products listed with denormalized CategoryName |
+| Products Details | `/Products/Details/{id}?categoryId={pk}` | 200 PASS | Point read using partition key |
+| Customers Index | `/Customers` | 200 PASS | Customers listed from cross-partition query |
+| Customers Details | `/Customers/Details/{id}` | 200 PASS | Customer point read with embedded addresses |
+| SalesOrders Index | `/SalesOrders?customerId={id}` | 200 PASS | Orders for customer (single-partition query) |
+| SalesOrder Details | `/SalesOrders/Details/{id}?customerId={id}` | 200 PASS | Order with embedded line items |
+| Home/About | `/Home/About` | 200 PASS | Static page works |
 
 ---
 
-## Summary — Files Changed
+## Technology Stack Summary
 
-### New Files Created
-| File | Purpose |
-|---|---|
-| `docs/migration_plan.md` | 8-phase migration plan with document model designs |
-| `infra/main.bicep` | Infrastructure orchestration |
-| `infra/main.bicepparam` | Bicep parameters |
-| `infra/modules/cosmos.bicep` | Cosmos DB account, database, containers |
-| `infra/smoke-test/` | SDK connectivity smoke test |
-| `Models/SalesOrder.cs` | New sales order document model |
-| `Services/CosmosDbService.cs` | Cosmos DB data access service |
-| `tools/DataMigration/DataMigration.csproj` | Migration console app project |
-| `tools/DataMigration/Program.cs` | CSV → Cosmos ETL pipeline |
-
-### Modified Files
-| File | Change |
-|---|---|
-| `AdventureWorks.Web.csproj` | net9.0, removed EF Core, added Cosmos SDK + Azure.Identity |
-| `Program.cs` | Rewritten for .NET 9.0 minimal hosting with Cosmos client |
-| `Models/Product.cs` | Rewritten with string ID, docType, denormalized fields |
-| `Models/ProductCategory.cs` | Rewritten with string ID, docType, parent info |
-| `Models/ProductModel.cs` | Rewritten with string ID, docType, embedded descriptions |
-| `Models/Customer.cs` | Rewritten with string ID, docType, embedded addresses |
-| `Controllers/*.cs` | All 4 controllers rewritten for CosmosDbService |
-| `Views/**/*.cshtml` | Updated for new model property names and string IDs |
-
-### Deleted Files
-| File | Reason |
-|---|---|
-| `Models/Address.cs` | Embedded in Customer document |
-| `Models/BuildVersion.cs` | Not needed in Cosmos |
-| `Models/CustomerAddress.cs` | Embedded in Customer document |
-| `Models/ErrorLog.cs` | Not needed in Cosmos |
-| `Models/ProductDescription.cs` | Embedded in ProductModel document |
-| `Models/ProductModelProductDescription.cs` | Junction table, eliminated |
-| `Models/SalesOrderDetail.cs` | Embedded in SalesOrder document |
-| `Models/SalesOrderHeader.cs` | Replaced by SalesOrder.cs |
-| `Models/sampledbContext.cs` | EF Core DbContext, eliminated |
-
----
-
-## Architecture Before & After
-
-```
-BEFORE                                    AFTER
-──────                                    ─────
-ASP.NET Core 2.1                          ASP.NET Core 9.0
-EF Core + SQL Server                      Cosmos DB SDK + NoSQL
-Connection string auth                    Entra ID RBAC (DefaultAzureCredential)
-11 normalized SQL tables                  2 containers, 5 document types
-Multiple JOINs per query                  Single point-read or single-partition query
-```
+| Component | Value |
+|-----------|-------|
+| Framework | ASP.NET Core MVC |
+| Source TFM | `netcoreapp2.1` (EF Core 2.1 / SQL Server) |
+| Target TFM | `net9.0` |
+| Cosmos SDK | `Microsoft.Azure.Cosmos` |
+| Auth | `Azure.Identity` (`DefaultAzureCredential`) |
+| Cosmos Account | `<cosmos-account-name>` |
+| Endpoint | `https://<cosmos-account-name>.documents.azure.com:443/` |
+| Database | `<database-name>` |
+| Containers | `customer-orders` (PK `/customerId`), `product-catalog` (PK `/productCategoryId`) |
+| Capacity Mode | Serverless |
+| Infrastructure | Bicep (`infra/main.bicep` + `infra/main.bicepparam`) |
+| Data Migration | Node.js (`@azure/cosmos` + `@azure/identity`) |
+| RBAC Principal | `<entra-principal-id>` |
